@@ -1,0 +1,28 @@
+name: tube_map_utils
+description: >
+  Extract structured data from London transport SVG maps. Parse Underground,
+  Overground, DLR, and Elizabeth line maps into queryable models with coordinate
+  extraction and path math utilities.
+version: 0.1.0
+publish_to: none
+repository: https://github.com/mulderpf/tube_map_utils
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  xml: ^6.5.0
+  vector_math: ^2.1.4
+  path_parsing: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/svg/
