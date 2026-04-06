@@ -1,3 +1,4 @@
+import 'dart:math' show sqrt;
 import 'dart:ui';
 
 import 'package:path_parsing/path_parsing.dart';
@@ -67,13 +68,13 @@ class SvgTransportMapParser {
       final d = path.getAttribute('d');
       if (d == null || d.isEmpty) continue;
 
-      final lineDef = _identifyLine(path);
-      if (lineDef == null) continue;
+      final match = _identifyLine(path);
+      if (match == null) continue;
 
       final subPaths = _parseSvgPath(d);
       if (subPaths.isEmpty) continue;
 
-      lineSegments.putIfAbsent(lineDef.id, () => []);
+      lineSegments.putIfAbsent(match.line.id, () => []);
 
       // Each subpath (delimited by M commands) becomes its own segment
       for (final points in subPaths) {
@@ -84,7 +85,16 @@ class SvgTransportMapParser {
         // (e.g., zone masks in a translated group)
         if (!_hasPointsInBounds(points, bounds)) continue;
 
-        lineSegments[lineDef.id]!.add(
+        // Colour-fallback matches are speculative — require a minimum
+        // point count and path length to filter station ticks,
+        // connectors, and decorative stubs
+        if (match.isColourFallback &&
+            (points.length < _minColourFallbackPoints ||
+                _polylineLength(points) < _minColourFallbackLength)) {
+          continue;
+        }
+
+        lineSegments[match.line.id]!.add(
           PathSegment(points: points, rawSvgPath: d),
         );
       }
@@ -151,12 +161,23 @@ class SvgTransportMapParser {
     return SvgBounds(x: 0, y: 0, width: width, height: height);
   }
 
-  LineDefinition? _identifyLine(XmlElement path) {
+  /// Minimum point count for colour-fallback-identified segments.
+  /// Segments with fewer points are discarded as station ticks or stubs.
+  static const int _minColourFallbackPoints = 3;
+
+  /// Minimum polyline length (SVG units) for colour-fallback-identified
+  /// segments. Segments shorter than this are discarded as decorative
+  /// connectors or stubs.
+  static const double _minColourFallbackLength = 150;
+
+  _LineMatch? _identifyLine(XmlElement path) {
     // 1. Check element ID against geo SVG IDs
     final id = path.getAttribute('id') ?? '';
     if (id.isNotEmpty) {
       final byGeoId = geoIdToLine[id];
-      if (byGeoId != null) return byGeoId;
+      if (byGeoId != null) {
+        return _LineMatch(byGeoId, isColourFallback: false);
+      }
     }
 
     // 2. Check CSS class against schematic classes
@@ -167,7 +188,9 @@ class SvgTransportMapParser {
         if (cls.startsWith('s') && cls.length > 1) {
           final suffix = cls.substring(1);
           final byClass = schematicClassToLine[suffix];
-          if (byClass != null) return byClass;
+          if (byClass != null) {
+            return _LineMatch(byClass, isColourFallback: false);
+          }
         }
       }
     }
@@ -180,19 +203,33 @@ class SvgTransportMapParser {
         if (cls.startsWith('s') && cls.length > 1) {
           final suffix = cls.substring(1);
           final byClass = schematicClassToLine[suffix];
-          if (byClass != null) return byClass;
+          if (byClass != null) {
+            return _LineMatch(byClass, isColourFallback: false);
+          }
         }
       }
     }
 
-    // 4. Fallback: match stroke colour
+    // 4. Fallback: match stroke colour (speculative)
     final stroke = _getStrokeColor(path);
     if (stroke != null) {
       final byColor = colorToLine[stroke];
-      if (byColor != null) return byColor;
+      if (byColor != null) {
+        return _LineMatch(byColor, isColourFallback: true);
+      }
     }
 
     return null;
+  }
+
+  static double _polylineLength(List<Offset> points) {
+    var length = 0.0;
+    for (var i = 0; i < points.length - 1; i++) {
+      final dx = points[i + 1].dx - points[i].dx;
+      final dy = points[i + 1].dy - points[i].dy;
+      length += sqrt(dx * dx + dy * dy);
+    }
+    return length;
   }
 
   String? _getStrokeColor(XmlElement element) {
@@ -365,6 +402,14 @@ class SvgTransportMapParser {
         .replaceAll(RegExp(r'-+'), '-')
         .replaceAll(RegExp(r'^-|-$'), '');
   }
+}
+
+/// Result of line identification — tracks which method matched.
+class _LineMatch {
+  _LineMatch(this.line, {required this.isColourFallback});
+
+  final LineDefinition line;
+  final bool isColourFallback;
 }
 
 /// Parses an SVG path `d` attribute string into a list of subpaths.

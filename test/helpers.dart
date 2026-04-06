@@ -54,18 +54,20 @@ const String parentClassSvg = '''
 ''';
 
 /// An SVG with inline stroke matching a known line colour for colour fallback.
+/// Path must have 3+ points and > 150 SVG units to pass colour-fallback filter.
 const String strokeColorSvg = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="6000" height="3500" viewBox="0 0 6000 3500">
-  <path d="M 100,100 L 200,200" fill="none" stroke="#AE6017" stroke-width="4.5"/>
+  <path d="M 100,100 L 200,200 L 400,100" fill="none" stroke="#AE6017" stroke-width="4.5"/>
 </svg>
 ''';
 
 /// An SVG with a 3-character hex colour.
+/// Path must have 3+ points and > 150 SVG units to pass colour-fallback filter.
 const String shortHexSvg = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="6000" height="3500" viewBox="0 0 6000 3500">
-  <path d="M 100,100 L 200,200" fill="none" stroke="#000" stroke-width="4.5"/>
+  <path d="M 100,100 L 200,200 L 400,100" fill="none" stroke="#000" stroke-width="4.5"/>
 </svg>
 ''';
 

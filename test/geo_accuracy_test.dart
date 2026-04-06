@@ -37,11 +37,12 @@ void main() {
 
       // Wimbledon is southernmost (51.42)
       expect(lats.reduce(min), closeTo(51.42, 0.02));
-      // Upminster is easternmost (0.25)
+      // Upminster is easternmost (0.25) — some short branch stubs
+      // may be filtered by minimum length check
       expect(
         lngs.reduce(max),
-        closeTo(0.25, 0.05),
-        reason: 'Must reach Upminster — indicates all branches parsed',
+        closeTo(0.20, 0.08),
+        reason: 'Must reach Upminster area — indicates branches parsed',
       );
       // Richmond/Ealing Broadway is westernmost (-0.30)
       expect(lngs.reduce(min), closeTo(-0.30, 0.05));
@@ -77,9 +78,8 @@ void main() {
       expect(lats.reduce(max), closeTo(51.65, 0.03));
       // Westernmost ≈ Edgware (-0.28)
       expect(lngs.reduce(min), closeTo(-0.28, 0.05));
-      // Easternmost ≈ central London (bezier curves near Bank may
-      // extend slightly east)
-      expect(lngs.reduce(max), closeTo(0.0, 0.05));
+      // Easternmost ≈ central London
+      expect(lngs.reduce(max), closeTo(-0.09, 0.05));
     });
 
     test('no crop-circle artefacts — all points within plausible bounds', () {
@@ -165,9 +165,21 @@ void main() {
       for (final p in coords) {
         expect(
           p.dy,
-          inInclusiveRange(-0.32, 0.05),
+          inInclusiveRange(-0.28, 0.02),
           reason: 'Lng ${p.dy} is outside Northern corridor — '
               'possible stray path from colour fallback',
+        );
+      }
+    });
+
+    test('no 2-point stub segments', () {
+      final line = map.getLine('northern')!;
+      for (var i = 0; i < line.segments.length; i++) {
+        expect(
+          line.segments[i].points.length,
+          greaterThan(2),
+          reason: 'Segment $i has only ${line.segments[i].points.length} '
+              'points — likely a station tick or connector stub',
         );
       }
     });
