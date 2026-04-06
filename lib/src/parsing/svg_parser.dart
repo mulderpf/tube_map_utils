@@ -70,18 +70,24 @@ class SvgTransportMapParser {
       final lineDef = _identifyLine(path);
       if (lineDef == null) continue;
 
-      final points = _parseSvgPath(d);
-      if (points.isEmpty) continue;
-
-      // Filter out segments whose points fall entirely outside the
-      // SVG viewport — these are transformed decorative elements
-      // (e.g., zone masks in a translated group)
-      if (!_hasPointsInBounds(points, bounds)) continue;
+      final subPaths = _parseSvgPath(d);
+      if (subPaths.isEmpty) continue;
 
       lineSegments.putIfAbsent(lineDef.id, () => []);
-      lineSegments[lineDef.id]!.add(
-        PathSegment(points: points, rawSvgPath: d),
-      );
+
+      // Each subpath (delimited by M commands) becomes its own segment
+      for (final points in subPaths) {
+        if (points.isEmpty) continue;
+
+        // Filter out segments whose points fall entirely outside the
+        // SVG viewport — these are transformed decorative elements
+        // (e.g., zone masks in a translated group)
+        if (!_hasPointsInBounds(points, bounds)) continue;
+
+        lineSegments[lineDef.id]!.add(
+          PathSegment(points: points, rawSvgPath: d),
+        );
+      }
     }
 
     // Build TransportLine objects
@@ -210,6 +216,15 @@ class SvgTransportMapParser {
     // Skip paths with fill-opacity (zone masks, decorative overlays)
     final fillOpacity = path.getAttribute('fill-opacity');
     if (fillOpacity != null) return true;
+
+    // Skip paths with a fill colour — transport lines use fill="none".
+    // Decorative paths (station markers, graphics) often have a fill.
+    final fill = path.getAttribute('fill');
+    if (fill != null && fill != 'none') return true;
+
+    // Also check style attribute for fill
+    final style = path.getAttribute('style') ?? '';
+    if (style.contains('fill-opacity')) return true;
 
     // Skip paths whose id suggests non-transport geometry
     final id = path.getAttribute('id') ?? '';
@@ -352,23 +367,32 @@ class SvgTransportMapParser {
   }
 }
 
-/// Parses an SVG path `d` attribute string into a list of [Offset] points.
+/// Parses an SVG path `d` attribute string into a list of subpaths.
 ///
+/// Each subpath (delimited by `M` commands) is a separate `List<Offset>`.
 /// Uses the `path_parsing` package to handle all SVG path commands
 /// (M, L, C, S, Q, T, A, Z, and relative variants).
-List<Offset> _parseSvgPath(String d) {
-  final points = <Offset>[];
-  final proxy = _PointCollectingProxy(points);
+List<List<Offset>> _parseSvgPath(String d) {
+  final proxy = _PointCollectingProxy();
   writeSvgPathDataToPath(d, proxy);
-  return points;
+  return proxy.getSubPaths();
 }
 
 class _PointCollectingProxy extends PathProxy {
-  _PointCollectingProxy(this.points);
+  _PointCollectingProxy();
 
-  final List<Offset> points;
+  final List<List<Offset>> _subPaths = [];
+  List<Offset> _currentPoints = [];
   double _currentX = 0;
   double _currentY = 0;
+
+  /// Returns all collected subpaths, finalising the current one.
+  List<List<Offset>> getSubPaths() {
+    if (_currentPoints.isNotEmpty) {
+      _subPaths.add(_currentPoints);
+    }
+    return _subPaths;
+  }
 
   @override
   void close() {
@@ -397,7 +421,7 @@ class _PointCollectingProxy extends PathProxy {
           3 * mt * mt * t * y1 +
           3 * mt * t * t * y2 +
           t * t * t * y3;
-      points.add(Offset(x, y));
+      _currentPoints.add(Offset(x, y));
     }
     _currentX = x3;
     _currentY = y3;
@@ -405,14 +429,19 @@ class _PointCollectingProxy extends PathProxy {
 
   @override
   void lineTo(double x, double y) {
-    points.add(Offset(x, y));
+    _currentPoints.add(Offset(x, y));
     _currentX = x;
     _currentY = y;
   }
 
   @override
   void moveTo(double x, double y) {
-    points.add(Offset(x, y));
+    // Start a new subpath — finalise current points if non-empty
+    if (_currentPoints.isNotEmpty) {
+      _subPaths.add(_currentPoints);
+      _currentPoints = [];
+    }
+    _currentPoints.add(Offset(x, y));
     _currentX = x;
     _currentY = y;
   }

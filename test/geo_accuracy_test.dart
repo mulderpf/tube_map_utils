@@ -100,6 +100,79 @@ void main() {
     });
   });
 
+  group('MoveTo splitting — no cross-branch straight lines', () {
+    test('Central Line has multiple segments for branches', () {
+      final line = map.getLine('central');
+      expect(line, isNotNull);
+      expect(
+        line!.segments.length,
+        greaterThan(1),
+        reason: 'Central has branches — must produce multiple segments',
+      );
+
+      // Each segment should be geographically contiguous
+      final transform =
+          AffineGeoTransform.fromControlPoints(geoMapControlPoints);
+      for (final segment in line.segments) {
+        if (segment.points.length < 2) continue;
+        final lngs = segment.points
+            .map((p) => transform.svgToGeo(p).dy)
+            .toList();
+        final lngRange = lngs.reduce(max) - lngs.reduce(min);
+        expect(
+          lngRange,
+          lessThan(0.4),
+          reason: 'Single segment spans too wide — likely contains '
+              'a moveTo jump between branches',
+        );
+      }
+    });
+
+    test('Metropolitan Line has multiple segments for spurs', () {
+      final line = map.getLine('metropolitan');
+      expect(line, isNotNull);
+      expect(
+        line!.segments.length,
+        greaterThan(1),
+        reason: 'Metropolitan has Chesham/Amersham/Watford spurs',
+      );
+    });
+
+    test('Piccadilly Line has multiple segments', () {
+      final line = map.getLine('piccadilly');
+      expect(line, isNotNull);
+      expect(
+        line!.segments.length,
+        greaterThan(1),
+        reason: 'Piccadilly has a Heathrow branch',
+      );
+    });
+
+    test('District Line has 4+ segments for branches', () {
+      final line = map.getLine('district');
+      expect(line, isNotNull);
+      expect(
+        line!.segments.length,
+        greaterThan(3),
+        reason: 'District has 4+ branches',
+      );
+    });
+  });
+
+  group('Northern Line — no stray paths', () {
+    test('all points within Northern line corridor', () {
+      final coords = extractor.getGeoCoordinates('northern');
+      for (final p in coords) {
+        expect(
+          p.dy,
+          inInclusiveRange(-0.32, 0.05),
+          reason: 'Lng ${p.dy} is outside Northern corridor — '
+              'possible stray path from colour fallback',
+        );
+      }
+    });
+  });
+
   group('Affine transformation — control point accuracy', () {
     test('no systematic directional offset', () {
       // Verify that known stations transform within tolerance
