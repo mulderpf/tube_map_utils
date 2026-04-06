@@ -203,10 +203,10 @@ void main() {
         final map = parser.parseString(testSvg);
 
         final victoria = map.getLine('victoria')!;
-        expect(victoria.color, equals(const Color(0xFF00A0E2)));
+        expect(victoria.color, equals(const Color(0xFF0A9CDA)));
 
         final bakerloo = map.getLine('bakerloo')!;
-        expect(bakerloo.color, equals(const Color(0xFF894E24)));
+        expect(bakerloo.color, equals(const Color(0xFFAE6017)));
       });
     });
 

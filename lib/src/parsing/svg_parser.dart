@@ -57,9 +57,12 @@ class SvgTransportMapParser {
     // Collect path data per line definition
     final lineSegments = <String, List<PathSegment>>{};
 
-    // Parse all path elements in the document
+    // Parse all path elements in the document, skipping those inside
+    // <defs> (markers, symbols, etc.) or decorative groups (zone masks)
     for (final path in svg.descendants.whereType<XmlElement>()) {
       if (path.name.local != 'path') continue;
+      if (_isInsideDefs(path)) continue;
+      if (_isDecorativePath(path)) continue;
 
       final d = path.getAttribute('d');
       if (d == null || d.isEmpty) continue;
@@ -69,6 +72,11 @@ class SvgTransportMapParser {
 
       final points = _parseSvgPath(d);
       if (points.isEmpty) continue;
+
+      // Filter out segments whose points fall entirely outside the
+      // SVG viewport — these are transformed decorative elements
+      // (e.g., zone masks in a translated group)
+      if (!_hasPointsInBounds(points, bounds)) continue;
 
       lineSegments.putIfAbsent(lineDef.id, () => []);
       lineSegments[lineDef.id]!.add(
@@ -196,6 +204,44 @@ class SvgTransportMapParser {
     }
 
     return null;
+  }
+
+  static bool _isDecorativePath(XmlElement path) {
+    // Skip paths with fill-opacity (zone masks, decorative overlays)
+    final fillOpacity = path.getAttribute('fill-opacity');
+    if (fillOpacity != null) return true;
+
+    // Skip paths whose id suggests non-transport geometry
+    final id = path.getAttribute('id') ?? '';
+    if (id.contains('mask') || id.contains('Zone') ||
+        id.contains('Thames')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static bool _hasPointsInBounds(List<Offset> points, SvgBounds bounds) {
+    final minX = bounds.x - bounds.width * 0.1;
+    final maxX = bounds.x + bounds.width * 1.1;
+    final minY = bounds.y - bounds.height * 0.1;
+    final maxY = bounds.y + bounds.height * 1.1;
+
+    for (final p in points) {
+      if (p.dx >= minX && p.dx <= maxX && p.dy >= minY && p.dy <= maxY) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static bool _isInsideDefs(XmlElement element) {
+    XmlNode? current = element.parentElement;
+    while (current is XmlElement) {
+      if (current.name.local == 'defs') return true;
+      current = current.parentElement;
+    }
+    return false;
   }
 
   static String _normalizeHexColor(String hex) {

@@ -57,7 +57,7 @@ const String parentClassSvg = '''
 const String strokeColorSvg = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="6000" height="3500" viewBox="0 0 6000 3500">
-  <path d="M 100,100 L 200,200" fill="none" stroke="#894E24" stroke-width="4.5"/>
+  <path d="M 100,100 L 200,200" fill="none" stroke="#AE6017" stroke-width="4.5"/>
 </svg>
 ''';
 

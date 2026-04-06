@@ -42,7 +42,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'bakerloo',
     name: 'Bakerloo',
-    color: Color(0xFF894E24),
+    color: Color(0xFFAE6017),
     type: TransportType.underground,
     geoSvgIds: ['Bakerloo Line'],
     schematicCssClasses: ['bakerloo'],
@@ -50,7 +50,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'central',
     name: 'Central',
-    color: Color(0xFFDC241F),
+    color: Color(0xFFF15B2E),
     type: TransportType.underground,
     geoSvgIds: ['Central Line'],
     schematicCssClasses: ['central'],
@@ -66,7 +66,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'district',
     name: 'District',
-    color: Color(0xFF007229),
+    color: Color(0xFF00A166),
     type: TransportType.underground,
     geoSvgIds: ['District Line'],
     schematicCssClasses: ['district'],
@@ -74,7 +74,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'hammersmith-city',
     name: 'Hammersmith & City',
-    color: Color(0xFFD799AF),
+    color: Color(0xFFF491A8),
     type: TransportType.underground,
     geoSvgIds: ['H&C Line 1'],
     schematicCssClasses: ['hnc'],
@@ -82,7 +82,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'jubilee',
     name: 'Jubilee',
-    color: Color(0xFF868F98),
+    color: Color(0xFF949699),
     type: TransportType.underground,
     geoSvgIds: ['Jubilee Line'],
     schematicCssClasses: ['jubilee'],
@@ -90,7 +90,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'metropolitan',
     name: 'Metropolitan',
-    color: Color(0xFF751056),
+    color: Color(0xFF91005A),
     type: TransportType.underground,
     geoSvgIds: ['Metropolitan Line'],
     schematicCssClasses: ['metropolitan'],
@@ -106,7 +106,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'piccadilly',
     name: 'Piccadilly',
-    color: Color(0xFF0019A8),
+    color: Color(0xFF094FA3),
     type: TransportType.underground,
     geoSvgIds: ['Piccadilly Line'],
     schematicCssClasses: ['piccadilly'],
@@ -114,7 +114,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'victoria',
     name: 'Victoria',
-    color: Color(0xFF00A0E2),
+    color: Color(0xFF0A9CDA),
     type: TransportType.underground,
     geoSvgIds: ['Victoria Line'],
     schematicCssClasses: ['victoria'],
@@ -122,7 +122,7 @@ const List<LineDefinition> knownLines = [
   LineDefinition(
     id: 'waterloo-city',
     name: 'Waterloo & City',
-    color: Color(0xFF76D0BD),
+    color: Color(0xFF88D0C4),
     type: TransportType.underground,
     geoSvgIds: ['Waterloo & City Line'],
     schematicCssClasses: ['wnc'],
