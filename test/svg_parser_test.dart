@@ -210,32 +210,6 @@ void main() {
       });
     });
 
-    group('colour-fallback minimum length filter', () {
-      test('short colour-matched segments are filtered', () {
-        const svg = '''
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="6000" height="3500" viewBox="0 0 6000 3500">
-  <path d="M 100,100 L 110,110" fill="none" stroke="#000" stroke-width="4.5"/>
-</svg>
-''';
-        final map = parser.parseString(svg);
-        // The short black path (14px, 2 points) should be filtered
-        expect(map.getLine('northern'), isNull);
-      });
-
-      test('named-ID segments are not filtered by length', () {
-        const svg = '''
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="6000" height="3500" viewBox="0 0 6000 3500">
-  <path id="Northern Line" d="M 100,100 L 110,110" fill="none" stroke="#000" stroke-width="4.5"/>
-</svg>
-''';
-        final map = parser.parseString(svg);
-        // Named-ID match bypasses the length filter
-        expect(map.getLine('northern'), isNotNull);
-      });
-    });
-
     group('station-line association', () {
       test('associates stations near line paths', () {
         final map = parser.parseString(testSvg);

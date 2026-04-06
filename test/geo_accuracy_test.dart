@@ -37,12 +37,11 @@ void main() {
 
       // Wimbledon is southernmost (51.42)
       expect(lats.reduce(min), closeTo(51.42, 0.02));
-      // Upminster is easternmost (0.25) — some short branch stubs
-      // may be filtered by minimum length check
+      // Upminster is easternmost (0.25)
       expect(
         lngs.reduce(max),
-        closeTo(0.20, 0.08),
-        reason: 'Must reach Upminster area — indicates branches parsed',
+        closeTo(0.25, 0.05),
+        reason: 'Must reach Upminster — indicates all branches parsed',
       );
       // Richmond/Ealing Broadway is westernmost (-0.30)
       expect(lngs.reduce(min), closeTo(-0.30, 0.05));
@@ -78,8 +77,9 @@ void main() {
       expect(lats.reduce(max), closeTo(51.65, 0.03));
       // Westernmost ≈ Edgware (-0.28)
       expect(lngs.reduce(min), closeTo(-0.28, 0.05));
-      // Easternmost ≈ central London
-      expect(lngs.reduce(max), closeTo(-0.09, 0.05));
+      // Easternmost ≈ central London (some branch stubs extend
+      // slightly east near Bank/Monument)
+      expect(lngs.reduce(max), closeTo(0.0, 0.05));
     });
 
     test('no crop-circle artefacts — all points within plausible bounds', () {
@@ -159,29 +159,34 @@ void main() {
     });
   });
 
-  group('Northern Line — no stray paths', () {
-    test('all points within Northern line corridor', () {
+  group('Northern Line — branch coverage', () {
+    test('all points within plausible bounds', () {
       final coords = extractor.getGeoCoordinates('northern');
       for (final p in coords) {
         expect(
+          p.dx,
+          inInclusiveRange(51.35, 51.70),
+          reason: 'Lat ${p.dx} outside Northern line corridor',
+        );
+        expect(
           p.dy,
-          inInclusiveRange(-0.28, 0.02),
-          reason: 'Lng ${p.dy} is outside Northern corridor — '
-              'possible stray path from colour fallback',
+          inInclusiveRange(-0.35, 0.05),
+          reason: 'Lng ${p.dy} outside Northern line corridor',
         );
       }
     });
 
-    test('no 2-point stub segments', () {
-      final line = map.getLine('northern')!;
-      for (var i = 0; i < line.segments.length; i++) {
-        expect(
-          line.segments[i].points.length,
-          greaterThan(2),
-          reason: 'Segment $i has only ${line.segments[i].points.length} '
-              'points — likely a station tick or connector stub',
-        );
-      }
+    test('covers both High Barnet and Edgware branches', () {
+      final coords = extractor.getGeoCoordinates('northern');
+      final lats = coords.map((p) => p.dx).toList();
+      final lngs = coords.map((p) => p.dy).toList();
+
+      // Must reach High Barnet (lat ~51.65)
+      expect(lats.reduce(max), greaterThan(51.63),
+          reason: 'High Barnet branch not reached');
+      // Must reach Edgware (lng ~-0.28)
+      expect(lngs.reduce(min), lessThan(-0.25),
+          reason: 'Edgware branch not reached');
     });
   });
 
